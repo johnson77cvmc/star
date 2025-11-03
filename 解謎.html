@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>太強了！解謎大師佩妤 🌟</title>
+  <style>
+    :root{
+      --bg1:#06081a;--bg2:#0d1030;--star:#fffacd;--moon:#ffe066;--sun:#ffcc00;--meteor:#88c9ff;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;}
+    body{
+      font-family: ui-sans-serif, 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'Microsoft YaHei', 'Heiti TC', 'Heiti SC', 'Source Han Sans TC', Arial, sans-serif;
+      background: radial-gradient(circle at 10% 20%, #1a1a40 0%, #0d0d1f 100%);
+      color:white; overflow:hidden; position:relative;
+    }
+
+    .star, .meteor, .sun, .moon{ position:absolute; border-radius:50%; opacity:0.8; }
+    .star{width:2px; height:2px; background:var(--star); animation: twinkle 2s infinite ease-in-out;}
+    .moon{width:80px; height:80px; background:var(--moon); top:80px; left:10%; box-shadow:0 0 25px 5px var(--moon);}
+    .sun{width:100px; height:100px; background:var(--sun); top:60px; right:10%; box-shadow:0 0 30px 10px var(--sun);}
+    .meteor{width:3px; height:120px; background:linear-gradient(180deg, var(--meteor), transparent); opacity:0.5; transform:rotate(45deg);}    
+    @keyframes twinkle{ 0%,100%{opacity:0.3;} 50%{opacity:1;} }
+
+    .center{position:fixed; inset:0; display:grid; place-items:center; z-index:3;}
+    .btn{
+      background:linear-gradient(135deg,#ffd166,#ff8fab);
+      border:none;color:#111;padding:12px 18px;border-radius:14px;font-weight:700;
+      box-shadow:0 10px 30px rgba(255,140,170,.35);cursor:pointer;transition:.2s transform;
+    }
+    .btn:active{transform:translateY(1px) scale(.98)}
+
+    .overlay{position:fixed; inset:0; display:none; place-items:center; background:rgba(0,0,0,.35); backdrop-filter: blur(6px); z-index:4;}
+    .overlay.show{display:grid; animation:fadeIn .4s ease forwards}
+    @keyframes fadeIn{from{opacity:0} to{opacity:1}}
+
+    .modal{ width:min(92vw,680px); aspect-ratio: 16/9; background:linear-gradient(180deg, rgba(255,255,255,.15), rgba(255,255,255,.06)); border:1px solid rgba(255,255,255,.18); border-radius:24px; position:relative; overflow:hidden; box-shadow: 0 20px 80px rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; }
+
+    h1{ margin:0; font-size: clamp(28px, 6vw, 64px); line-height:1.25; letter-spacing:.02em; text-align:center; z-index:2; text-shadow:0 0 18px rgba(255,255,255,.5);}    
+    .sub{margin-top:10px; opacity:.9; font-size: clamp(14px, 2.4vw, 18px); text-align:center;}
+
+    .actions{position:absolute; bottom:16px; left:0; right:0; display:flex; justify-content:center; gap:10px; z-index:2}
+    .ghost{background:transparent; border:1px solid rgba(255,255,255,.4); color:#fff; border-radius:12px; padding:8px 12px; cursor:pointer}
+
+    canvas#confetti{position:fixed; inset:0; pointer-events:none; z-index:5}
+
+    .emoji{position:absolute; font-size: clamp(16px, 3.2vw, 26px); opacity:0; animation: floatUp 6s ease-in infinite}
+    @keyframes floatUp{ 0%{transform: translateY(20px) scale(.9) rotate(0deg); opacity:0} 10%{opacity:1} 80%{opacity:.9} 100%{transform: translateY(-120vh) scale(1.2) rotate(360deg); opacity:0} }
+  </style>
+</head>
+<body>
+  <div class="moon"></div>
+  <div class="sun"></div>
+  <script>
+    for(let i=0;i<150;i++){
+      const s=document.createElement('div');
+      s.className='star';
+      s.style.left=Math.random()*100+'%';
+      s.style.top=Math.random()*100+'%';
+      s.style.animationDelay=Math.random()*3+'s';
+      document.body.appendChild(s);
+    }
+    for(let i=0;i<6;i++){
+      const m=document.createElement('div');
+      m.className='meteor';
+      m.style.left=Math.random()*100+'%';
+      m.style.top=Math.random()*50+'%';
+      m.style.animation=`fadeInOut 4s ease-in ${Math.random()*5}s infinite`;
+      document.body.appendChild(m);
+    }
+  </script>
+
+  <canvas id="confetti"></canvas>
+  <div class="center">
+    <button id="open" class="btn">點我 🌙</button>
+  </div>
+
+  <div class="overlay" id="overlay" role="dialog" aria-modal="true">
+    <div class="modal" id="modal">
+      <div style="z-index:2; padding: 0 6%">
+        <h1>太強了！<br>解謎大師佩妤 🌟</h1>
+        <div class="sub">星光為妳閃耀，太陽為妳喝采 ☀️</div>
+      </div>
+      <div class="actions">
+        <button class="ghost" id="again">再放一次</button>
+        <button class="ghost" id="close">關閉</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const $ = sel => document.querySelector(sel);
+  const overlay = $('#overlay');
+  const openBtn = $('#open');
+  const closeBtn = $('#close');
+  const againBtn = $('#again');
+  const confetti = document.getElementById('confetti');
+  const ctx = confetti.getContext('2d');
+  let W,H, pieces=[]; const COLORS=['#ffec99','#ffd6a5','#caffbf','#9bf6ff','#bdb2ff','#ffc6ff'];
+
+  function resize(){ W = confetti.width = window.innerWidth; H = confetti.height = window.innerHeight; }
+  window.addEventListener('resize', resize); resize();
+
+  function makePiece(){
+    return { x: Math.random()*W, y: -10, r: Math.random()*8+4, c: COLORS[(Math.random()*COLORS.length)|0], vx: Math.random()*2-1, vy: Math.random()*2+2, rot: Math.random()*360, vr: Math.random()*10-5, shape: Math.random()>.5? 'rect':'circ' }
+  }
+  function spray(n=150){ for(let i=0;i<n;i++) pieces.push(makePiece()); }
+  function step(){
+    ctx.clearRect(0,0,W,H);
+    for(let i=pieces.length-1;i>=0;i--){
+      const p = pieces[i]; p.x+=p.vx; p.y+=p.vy; p.vy+=0.02; p.rot+=p.vr; if(p.y>H+20) pieces.splice(i,1);
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot*Math.PI/180); ctx.fillStyle=p.c;
+      if(p.shape==='rect') ctx.fillRect(-p.r/2,-p.r/2,p.r,p.r); else { ctx.beginPath(); ctx.arc(0,0,p.r/2,0,Math.PI*2); ctx.fill(); }
+      ctx.restore();
+    }
+    requestAnimationFrame(step);
+  }
+  step();
+
+  const EMOJIS = ['🌟','🌕','☀️','💫','🌈','⭐'];
+  function floatEmojis(){
+    const layer = document.body;
+    for(let i=0;i<10;i++){
+      const e = document.createElement('div'); e.className='emoji'; e.textContent = EMOJIS[(Math.random()*EMOJIS.length)|0]; e.style.left = (Math.random()*100)+'%'; e.style.animationDelay = (Math.random()*3)+'s'; layer.appendChild(e); setTimeout(()=> layer.removeChild(e), 6000);
+    }
+  }
+
+  function open(){ overlay.classList.add('show'); spray(240); floatEmojis(); }
+  function close(){ overlay.classList.remove('show'); }
+  function again(){ spray(200); floatEmojis(); }
+
+  openBtn.addEventListener('click', open);
+  closeBtn.addEventListener('click', close);
+  againBtn.addEventListener('click', again);
+})();
+</script>
+</body>
+</html>
